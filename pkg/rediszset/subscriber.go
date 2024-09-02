@@ -398,6 +398,10 @@ func (h *messageHandler) processMessage(ctx context.Context, topic string, read 
 	src := read.Z.Member.(string)
 	srcKey := getKey(topic, src)
 	member, err := h.rc.Get(ctx, srcKey).Result()
+	if errors.Is(err, redis.Nil) {
+		h.logger.Error("Message nil", err, watermill.LogFields{"key": srcKey})
+		return nil
+	}
 	if err != nil {
 		return errors.Wrapf(err, "message %s get failed", srcKey)
 	}

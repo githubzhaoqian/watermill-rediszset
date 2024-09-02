@@ -93,16 +93,15 @@ func (p *Publisher) Publish(topic string, msgs ...*message.Message) error {
 		if err != nil {
 			return errors.Wrapf(err, "cannot marshal message %s", msg.UUID)
 		}
-
-		id, err := p.client.ZAdd(msg.Context(), topic, redis.Z{Score: score, Member: msg.UUID}).Result()
-		if err != nil {
-			return errors.Wrapf(err, "cannot zadd message %s", msg.UUID)
-		}
 		// 设置string 值
 		valueKey := getKey(topic, msg.UUID)
 		_, err = p.client.Set(msg.Context(), valueKey, value, 0).Result()
 		if err != nil {
 			return errors.Wrapf(err, "cannot set message %s", msg.UUID)
+		}
+		id, err := p.client.ZAdd(msg.Context(), topic, redis.Z{Score: score, Member: msg.UUID}).Result()
+		if err != nil {
+			return errors.Wrapf(err, "cannot zadd message %s", msg.UUID)
 		}
 		logFields["zadd_id"] = id
 		p.logger.Trace("Message sent to redis stream", logFields)
